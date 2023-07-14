@@ -30,9 +30,12 @@ public class ProductController {
     }
 
     @GetMapping(path = "/products")
-    public List<Product> getAllProduct(@RequestParam(name = "name", required = false) String name) {
-        if (name != null) {
-           return productService.getAllByName(name);
+    public List<Product> getAllProduct(
+            @RequestParam(name = "name", required = false) String name,
+            @RequestParam(name = "price", required = false) Long price
+    ) {
+        if (name != null || price != null) {
+           return productService.getAllByNameOrPrice(name, price);
         }
 
         return productService.getAll();

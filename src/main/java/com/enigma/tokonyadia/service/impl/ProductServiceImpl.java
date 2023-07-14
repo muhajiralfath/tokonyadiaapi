@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -70,8 +69,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<Product> getAllByName(String name) {
-        return null;
+    public List<Product> getAllByNameOrPrice(String name, Long price) {
+        return productRepository.findAllByNameContainsOrProductPrices_PriceGreaterThan(name, price);
     }
 
     @Override

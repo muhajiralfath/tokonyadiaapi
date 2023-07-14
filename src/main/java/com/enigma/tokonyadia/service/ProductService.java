@@ -11,7 +11,7 @@ public interface ProductService {
     List<Product> createBulk(List<Product> products);
     Product getById(String id);
     List<Product> getAll();
-    List<Product> getAllByName(String name);
+    List<Product> getAllByNameOrPrice(String name, Long price);
     Product update(Product product);
     String deleteById(String id);
 
