@@ -36,28 +36,6 @@ public class ProductController {
         return productService.getAll();
     }
 
-
-    // Put Mapping dengan Path Variable
-//    @PutMapping(path = "/products/{id}")
-//    public Product updateProductWithParam(
-//            @RequestBody Product product,
-//            @PathVariable(name = "id") String id
-//    ) {
-//        // TODO: 1. Cari Index untuk dirubah ke Product -> List
-//        Optional<Product> first = products.stream().filter(p -> p.getId().equals(id)).findFirst();
-//
-//        if (first.isPresent()) {
-//            int index = products.indexOf(first.get());
-//            // TODO: 2. Jika sudah ditemukan kirimkan index dan product dari client
-//            product.setId(id);
-//            products.set(index, product);
-//            return product;
-//        }
-//
-//        // TODO: 3. Jika tidak ada return null
-//        return null;
-//    }
-
     //  Cara 2 Request Body
     @PutMapping(path = "/products")
     public Product updateProduct(@RequestBody Product product) {
