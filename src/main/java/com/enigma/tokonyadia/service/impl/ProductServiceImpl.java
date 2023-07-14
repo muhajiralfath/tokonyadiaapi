@@ -1,11 +1,18 @@
 package com.enigma.tokonyadia.service.impl;
 
 import com.enigma.tokonyadia.entity.Product;
+import com.enigma.tokonyadia.entity.ProductPrice;
+import com.enigma.tokonyadia.entity.Store;
+import com.enigma.tokonyadia.model.request.ProductRequest;
+import com.enigma.tokonyadia.model.response.ProductResponse;
 import com.enigma.tokonyadia.repository.ProductRepository;
+import com.enigma.tokonyadia.service.ProductPriceService;
 import com.enigma.tokonyadia.service.ProductService;
+import com.enigma.tokonyadia.service.StoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
 @Service
@@ -13,10 +20,37 @@ import java.util.List;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final StoreService storeService;
+    private final ProductPriceService productPriceService;
 
+    @Transactional(rollbackOn = Exception.class)
     @Override
-    public Product create(Product product) {
-        return productRepository.save(product);
+    public ProductResponse create(ProductRequest request) {
+        // TODO: Validasi Store
+        Store store = storeService.getById(request.getStoreId());
+
+        // TODO: Create Product Price
+        ProductPrice productPrice = new ProductPrice();
+        productPrice.setPrice(request.getPrice());
+        productPrice.setStock(request.getStock());
+        productPrice.setStore(store);
+        ProductPrice savedProductPrice = productPriceService.create(productPrice);
+
+        // TODO: Create Product
+        Product product = new Product();
+        product.setName(request.getProductName());
+        product.setDescription(request.getDescription());
+        Product savedProduct = productRepository.save(product);
+
+        savedProductPrice.setProduct(savedProduct);
+
+        return new ProductResponse(
+                savedProduct.getId(),
+                savedProduct.getName(),
+                savedProductPrice.getPrice(),
+                savedProductPrice.getStock(),
+                store.getId()
+        );
     }
 
     @Override

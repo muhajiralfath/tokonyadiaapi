@@ -15,7 +15,6 @@ import javax.persistence.*;
 @Entity
 @Table(name = "m_product")
 public class Product {
-
     @GenericGenerator(strategy = "uuid2", name = "system-uuid")
     @GeneratedValue(generator = "system-uuid")
     @Id

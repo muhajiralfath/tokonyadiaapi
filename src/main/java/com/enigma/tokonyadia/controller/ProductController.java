@@ -1,6 +1,8 @@
 package com.enigma.tokonyadia.controller;
 
 import com.enigma.tokonyadia.entity.Product;
+import com.enigma.tokonyadia.model.request.ProductRequest;
+import com.enigma.tokonyadia.model.response.ProductResponse;
 import com.enigma.tokonyadia.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +20,8 @@ public class ProductController {
     }
 
     @PostMapping(path = "/products")
-    public Product createNewProduct(@RequestBody Product product) {
-        return productService.create(product);
+    public ProductResponse createNewProduct(@RequestBody ProductRequest request) {
+        return productService.create(request);
     }
 
     @PostMapping(path = "/products/bulk")
