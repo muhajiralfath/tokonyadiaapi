@@ -36,4 +36,5 @@ public class ProductPrice {
     @Column(columnDefinition = "int check (stock > 0)")
     private Integer stock;
 
+    private Boolean isActive;
 }

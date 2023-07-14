@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,26 +30,26 @@ public class ProductServiceImpl implements ProductService {
         // TODO: Validasi Store
         Store store = storeService.getById(request.getStoreId());
 
+        // TODO: Create Product
+        Product product = new Product();
+        product.setName(request.getProductName());
+        product.setDescription(request.getDescription());
+        productRepository.saveAndFlush(product);
+
         // TODO: Create Product Price
         ProductPrice productPrice = new ProductPrice();
         productPrice.setPrice(request.getPrice());
         productPrice.setStock(request.getStock());
         productPrice.setStore(store);
-        ProductPrice savedProductPrice = productPriceService.create(productPrice);
-
-        // TODO: Create Product
-        Product product = new Product();
-        product.setName(request.getProductName());
-        product.setDescription(request.getDescription());
-        Product savedProduct = productRepository.save(product);
-
-        savedProductPrice.setProduct(savedProduct);
+        productPrice.setProduct(product);
+        productPrice.setIsActive(true);
+        productPriceService.create(productPrice);
 
         return new ProductResponse(
-                savedProduct.getId(),
-                savedProduct.getName(),
-                savedProductPrice.getPrice(),
-                savedProductPrice.getStock(),
+                product.getId(),
+                product.getName(),
+                productPrice.getPrice(),
+                productPrice.getStock(),
                 store.getId()
         );
     }
