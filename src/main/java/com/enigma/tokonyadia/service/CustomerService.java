@@ -1,6 +1,7 @@
 package com.enigma.tokonyadia.service;
 
 import com.enigma.tokonyadia.entity.Customer;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 

@@ -1,30 +1,31 @@
 package com.enigma.tokonyadia.entity;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Table;
 
-@Getter
-@Setter
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Product {
+@Entity
+@Table(name = "m_address")
+public class Address {
 
+    @Id
     @GenericGenerator(strategy = "uuid2", name = "system-uuid")
     @GeneratedValue(generator = "system-uuid")
-    @Id
     private String id;
 
-    @Column(name = "name", nullable = false)
-    private String name;
+    private String street;
 
-    @Column(name = "description", nullable = false)
-    private String description;
+    private String city;
+
+    private String province;
 
 }
