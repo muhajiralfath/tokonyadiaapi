@@ -14,4 +14,5 @@ public interface ProductRepository extends JpaRepository<Product, String> {
     // Cari Semua Product dengan Product Price Lebih dari parameter
     List<Product> findAllByNameContainsOrProductPrices_PriceGreaterThan(String name, Long price);
 
+
 }

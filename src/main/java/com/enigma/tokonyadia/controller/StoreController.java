@@ -1,8 +1,11 @@
 package com.enigma.tokonyadia.controller;
 
 import com.enigma.tokonyadia.entity.Store;
+import com.enigma.tokonyadia.model.response.CommonResponse;
 import com.enigma.tokonyadia.service.StoreService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,12 +17,22 @@ public class StoreController {
     private final StoreService storeService;
 
     @PostMapping(path = "/store")
-    public Store createNewStore(@RequestBody Store store) {
-        return storeService.create(store);
+    public ResponseEntity<CommonResponse<Store>> createNewStore(@RequestBody Store request) {
+        Store store = storeService.create(request);
+
+        CommonResponse<Store> commonResponse = CommonResponse.<Store>builder()
+                .statusCode(HttpStatus.CREATED.value())
+                .message("Successfully created")
+                .data(store)
+                .build();
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(commonResponse);
     }
 
     @GetMapping(path = "/store/{id}")
-    public Store getAllStore(@PathVariable String id) {
+    public Store getStoreById(@PathVariable String id) {
         return storeService.getById(id);
     }
 

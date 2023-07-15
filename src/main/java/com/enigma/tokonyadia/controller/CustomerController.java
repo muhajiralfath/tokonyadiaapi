@@ -24,8 +24,12 @@ public class CustomerController {
     }
 
     @GetMapping(path = "/customers")
-    public List<Customer> getAllCustomer() {
-        return customerService.getAll();
+    public List<Customer> getAllCustomer(
+            @RequestParam(name = "name", required = false) String name,
+            @RequestParam(name = "mobilePhone", required = false) String mobilePhone,
+            @RequestParam(name = "email", required = false) String email
+    ) {
+        return customerService.searchByNameOrPhoneOrEmail(name, mobilePhone, email);
     }
 
     @GetMapping(path = "/customers{id}")

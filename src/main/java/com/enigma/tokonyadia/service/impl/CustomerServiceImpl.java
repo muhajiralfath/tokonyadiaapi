@@ -1,14 +1,15 @@
 package com.enigma.tokonyadia.service.impl;
 
-import com.enigma.tokonyadia.entity.Address;
 import com.enigma.tokonyadia.entity.Customer;
 import com.enigma.tokonyadia.repository.CustomerRepository;
 import com.enigma.tokonyadia.service.AddressService;
 import com.enigma.tokonyadia.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
+import javax.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -23,7 +24,7 @@ public class CustomerServiceImpl implements CustomerService {
         this.addressService = addressService;
     }
 
-//    @Transactional(rollbackOn = RuntimeException.class)
+    //    @Transactional(rollbackOn = RuntimeException.class)
     @Override
     public Customer create(Customer customer) {
 //        Address address = addressService.create(customer.getAddress());
@@ -47,8 +48,35 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public List<Customer> searchByNameOrPhoneOrEmail(String name, String phone, String email) {
-        return null;
+    public List<Customer> searchByNameOrPhoneOrEmail(String name, String mobilePhone, String email) {
+        Specification<Customer> specification = (root, query, criteriaBuilder) -> {
+            // Root -> Entity
+            // Query -> Where
+            // CriteriaBuilder -> Equal (=), NotEqual (<>), Like,
+
+            // Predicate -> Logika yang digunakan untuk melakukan pemfilteran pada entitas/data
+//            Predicate namePredicate2 = criteriaBuilder.equal(root.get("name"), name);
+            List<Predicate> predicates = new ArrayList<>();
+            if (name != null) {
+                Predicate namePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%");
+                predicates.add(namePredicate);
+            }
+
+            if (mobilePhone != null) {
+                Predicate mobilePhonePredicate = criteriaBuilder.equal(root.get("mobilePhone"), mobilePhone);
+                predicates.add(mobilePhonePredicate);
+            }
+
+            if (email != null) {
+                Predicate emailPredicate = criteriaBuilder.equal(root.get("email"), email);
+                predicates.add(emailPredicate);
+            }
+
+            // SELECT * FROM Customer WHERE name LIKE %name-parameter%
+            return query.where(predicates.toArray(new Predicate[] {})).getRestriction();
+        };
+
+        return customerRepository.findAll(specification);
     }
 
     @Override

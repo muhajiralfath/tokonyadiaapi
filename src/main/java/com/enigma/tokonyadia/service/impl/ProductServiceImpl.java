@@ -5,15 +5,20 @@ import com.enigma.tokonyadia.entity.ProductPrice;
 import com.enigma.tokonyadia.entity.Store;
 import com.enigma.tokonyadia.model.request.ProductRequest;
 import com.enigma.tokonyadia.model.response.ProductResponse;
+import com.enigma.tokonyadia.model.response.StoreResponse;
 import com.enigma.tokonyadia.repository.ProductRepository;
 import com.enigma.tokonyadia.service.ProductPriceService;
 import com.enigma.tokonyadia.service.ProductService;
 import com.enigma.tokonyadia.service.StoreService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -47,9 +52,14 @@ public class ProductServiceImpl implements ProductService {
         return new ProductResponse(
                 product.getId(),
                 product.getName(),
+                product.getDescription(),
                 productPrice.getPrice(),
                 productPrice.getStock(),
-                store.getId()
+                new StoreResponse(
+                        store.getId(),
+                        store.getName(),
+                        store.getAddress()
+                )
         );
     }
 
@@ -64,8 +74,31 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<Product> getAll() {
-        return productRepository.findAll();
+    public List<ProductResponse> getAll() {
+        List<Product> products = productRepository.findAll();
+
+        List<ProductResponse> productResponses = products.stream().map(product -> {
+            Optional<ProductPrice> productPrice = product.getProductPrices().stream().filter(ProductPrice::getIsActive).findFirst();
+
+            if (productPrice.isPresent()) {
+                return new ProductResponse(
+                        product.getId(),
+                        product.getName(),
+                        product.getDescription(),
+                        productPrice.get().getPrice(),
+                        productPrice.get().getStock(),
+                        new StoreResponse(
+                                productPrice.get().getStore().getId(),
+                                productPrice.get().getStore().getName(),
+                                productPrice.get().getStore().getAddress()
+                        )
+                );
+            }
+
+            return null;
+        }).collect(Collectors.toList());
+
+        return productResponses;
     }
 
     @Override
