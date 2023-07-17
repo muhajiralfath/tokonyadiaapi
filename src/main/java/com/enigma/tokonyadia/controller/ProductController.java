@@ -2,9 +2,11 @@ package com.enigma.tokonyadia.controller;
 
 import com.enigma.tokonyadia.model.request.ProductRequest;
 import com.enigma.tokonyadia.model.response.CommonResponse;
+import com.enigma.tokonyadia.model.response.PagingResponse;
 import com.enigma.tokonyadia.model.response.ProductResponse;
 import com.enigma.tokonyadia.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,10 +15,11 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping(path = "/api/v1/products")
 public class ProductController {
     private final ProductService productService;
 
-    @PostMapping(path = "/products")
+    @PostMapping
     public ResponseEntity<?> createNewProduct(@RequestBody ProductRequest request) {
         ProductResponse productResponse = productService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -27,7 +30,7 @@ public class ProductController {
                         .build());
     }
 
-    @PostMapping(path = "/products/bulk")
+    @PostMapping(path = "/bulk")
     public ResponseEntity<?> createBulkProduct(@RequestBody List<ProductRequest> products) {
         List<ProductResponse> productResponses = productService.createBulk(products);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -38,21 +41,29 @@ public class ProductController {
                         .build());
     }
 
-    @GetMapping(path = "/products")
+    @GetMapping
     public ResponseEntity<?> getAllProduct(
             @RequestParam(name = "name", required = false) String name,
-            @RequestParam(name = "maxPrice", required = false) Long maxPrice) {
-        List<ProductResponse> productResponses = productService.getAllByNameOrPrice(name, maxPrice);
+            @RequestParam(name = "maxPrice", required = false) Long maxPrice,
+            @RequestParam(name = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
+    ) {
+        Page<ProductResponse> productResponses = productService.getAllByNameOrPrice(name, maxPrice, page - 1, size);
+        PagingResponse pagingResponse = PagingResponse.builder()
+                .currentPage(page)
+                .totalPage(productResponses.getTotalPages())
+                .size(size)
+                .build();
         return ResponseEntity.status(HttpStatus.OK)
-                .body(CommonResponse.<List<ProductResponse>>builder()
+                .body(CommonResponse.builder()
                         .statusCode(HttpStatus.OK.value())
                         .message("Successfully get all customer")
-                        .data(productResponses)
+                        .data(productResponses.getContent())
+                        .paging(pagingResponse)
                         .build());
     }
 
-    //  Cara 2 Request Body
-    @PutMapping(path = "/products")
+    @PutMapping
     public ResponseEntity<?> updateProduct(@RequestBody ProductRequest request) {
         ProductResponse productResponse = productService.update(request);
         return ResponseEntity.status(HttpStatus.OK)
@@ -63,7 +74,7 @@ public class ProductController {
                         .build());
     }
 
-    @DeleteMapping(path = "/products/{id}")
+    @DeleteMapping(path = "/{id}")
     public ResponseEntity<?> deleteById(@PathVariable(name = "id") String id) {
         productService.deleteById(id);
         return ResponseEntity.status(HttpStatus.OK)

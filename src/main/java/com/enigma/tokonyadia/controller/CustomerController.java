@@ -12,11 +12,11 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping(path = "/api/v1/customers")
 public class CustomerController {
-
     private final CustomerService customerService;
 
-    @PostMapping(path = "/customers")
+    @PostMapping
     public ResponseEntity<?> createNewCustomer(@RequestBody Customer customer) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CommonResponse.<Customer>builder()
@@ -26,7 +26,7 @@ public class CustomerController {
                         .build());
     }
 
-    @GetMapping(path = "/customers")
+    @GetMapping
     public ResponseEntity<?> getAllCustomer(
             @RequestParam(name = "name", required = false) String name,
             @RequestParam(name = "mobilePhone", required = false) String mobilePhone,
@@ -41,7 +41,7 @@ public class CustomerController {
                         .build());
     }
 
-    @GetMapping(path = "/customers{id}")
+    @GetMapping(path = "/{id}")
     public ResponseEntity<?> getById(@PathVariable String id) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(CommonResponse.<Customer>builder()
@@ -51,7 +51,7 @@ public class CustomerController {
                         .build());
     }
 
-    @PutMapping(path = "/customers")
+    @PutMapping
     public ResponseEntity<?> updateCustomer(@RequestBody Customer customer) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(CommonResponse.<Customer>builder()

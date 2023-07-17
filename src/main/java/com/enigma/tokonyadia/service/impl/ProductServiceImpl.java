@@ -10,7 +10,12 @@ import com.enigma.tokonyadia.repository.ProductRepository;
 import com.enigma.tokonyadia.service.ProductPriceService;
 import com.enigma.tokonyadia.service.ProductService;
 import com.enigma.tokonyadia.service.StoreService;
+import com.enigma.tokonyadia.util.ValidationUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -31,10 +36,12 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final StoreService storeService;
     private final ProductPriceService productPriceService;
+    private final ValidationUtil validationUtil;
 
     @Transactional(rollbackOn = Exception.class)
     @Override
     public ProductResponse create(ProductRequest request) {
+        validationUtil.validate(request);
         Store store = storeService.getById(request.getStoreId());
 
         Product product = Product.builder()
@@ -85,7 +92,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<ProductResponse> getAllByNameOrPrice(String name, Long maxPrice) {
+    public Page<ProductResponse> getAllByNameOrPrice(String name, Long maxPrice, Integer page, Integer size) {
         Specification<Product> specification = (root, query, criteriaBuilder) -> {
             Join<Product, ProductPrice> productPrices = root.join("productPrices");
             List<Predicate> predicates = new ArrayList<>();
@@ -99,19 +106,21 @@ public class ProductServiceImpl implements ProductService {
 
             return query.where(predicates.toArray(new Predicate[]{})).getRestriction();
         };
-        List<Product> products = productRepository.findAll(specification);
-
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Product> products = productRepository.findAll(specification, pageable);
         List<ProductResponse> productResponses = new ArrayList<>();
-        for (Product product : products) {
-            Optional<ProductPrice> productPrice = product.getProductPrices().stream().filter(ProductPrice::getIsActive).findFirst();
+        for (Product product : products.getContent()) {
+            Optional<ProductPrice> productPrice = product.getProductPrices()
+                    .stream()
+                    .filter(ProductPrice::getIsActive).findFirst();
 
-            if (productPrice.isEmpty()) break;
+            if (productPrice.isEmpty()) continue;
             Store store = productPrice.get().getStore();
 
             productResponses.add(toProductResponse(product, productPrice.get(), store));
         }
 
-        return productResponses;
+        return new PageImpl<>(productResponses, pageable, products.getTotalElements());
     }
 
     @Transactional(rollbackOn = Exception.class)

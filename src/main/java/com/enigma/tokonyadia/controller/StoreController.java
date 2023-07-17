@@ -12,11 +12,12 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping(path = "/api/v1/store")
 public class StoreController {
 
     private final StoreService storeService;
 
-    @PostMapping(path = "/store")
+    @PostMapping
     public ResponseEntity<CommonResponse<Store>> createNewStore(@RequestBody Store request) {
         Store store = storeService.create(request);
         return ResponseEntity
@@ -28,7 +29,7 @@ public class StoreController {
                         .build());
     }
 
-    @GetMapping(path = "/store/{id}")
+    @GetMapping(path = "/{id}")
     public ResponseEntity<?> getStoreById(@PathVariable String id) {
         Store store = storeService.getById(id);
         return ResponseEntity.status(HttpStatus.OK)
@@ -39,7 +40,7 @@ public class StoreController {
                         .build());
     }
 
-    @GetMapping(path = "/store")
+    @GetMapping
     public ResponseEntity<?> getAllStore() {
         List<Store> stores = storeService.getAll();
         return ResponseEntity.status(HttpStatus.OK)
@@ -50,7 +51,7 @@ public class StoreController {
                         .build());
     }
 
-    @PutMapping(path = "/store")
+    @PutMapping
     public ResponseEntity<?> updateStore(@RequestBody Store request) {
         Store store = storeService.update(request);
         return ResponseEntity.status(HttpStatus.OK)

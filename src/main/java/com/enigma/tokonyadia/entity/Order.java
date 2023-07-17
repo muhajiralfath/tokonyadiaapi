@@ -1,10 +1,12 @@
 package com.enigma.tokonyadia.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -28,6 +30,9 @@ public class Order {
 
     @Column(name = "trans_date")
     private LocalDateTime transDate;
+//    @Temporal(TemporalType.DATE)
+//    @JsonFormat(pattern = "dd-MM-YYYY")
+//    private Date date;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.PERSIST)
     private List<OrderDetail> orderDetails;
