@@ -1,15 +1,13 @@
 package com.enigma.tokonyadia.controller;
 
 import com.enigma.tokonyadia.entity.Customer;
+import com.enigma.tokonyadia.model.response.CommonResponse;
 import com.enigma.tokonyadia.service.CustomerService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 import java.util.List;
 
 @RestController
@@ -19,32 +17,58 @@ public class CustomerController {
     private final CustomerService customerService;
 
     @PostMapping(path = "/customers")
-    public Customer createNewCustomer(@RequestBody Customer customer) {
-        return customerService.create(customer);
+    public ResponseEntity<?> createNewCustomer(@RequestBody Customer customer) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(CommonResponse.<Customer>builder()
+                        .statusCode(HttpStatus.CREATED.value())
+                        .message("Successfully create new customer")
+                        .data(customerService.create(customer))
+                        .build());
     }
 
     @GetMapping(path = "/customers")
-    public List<Customer> getAllCustomer(
+    public ResponseEntity<?> getAllCustomer(
             @RequestParam(name = "name", required = false) String name,
             @RequestParam(name = "mobilePhone", required = false) String mobilePhone,
             @RequestParam(name = "email", required = false) String email
     ) {
-        return customerService.searchByNameOrPhoneOrEmail(name, mobilePhone, email);
+        List<Customer> customers = customerService.searchByNameOrPhoneOrEmail(name, mobilePhone, email);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(CommonResponse.builder()
+                        .statusCode(HttpStatus.OK.value())
+                        .message("Successfully get all customer")
+                        .data(customers)
+                        .build());
     }
 
     @GetMapping(path = "/customers{id}")
-    public Customer getById(@PathVariable String id) {
-        return customerService.getById(id);
+    public ResponseEntity<?> getById(@PathVariable String id) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(CommonResponse.<Customer>builder()
+                        .statusCode(HttpStatus.OK.value())
+                        .message("Successfully get customer by id")
+                        .data(customerService.getById(id))
+                        .build());
     }
 
     @PutMapping(path = "/customers")
-    public Customer updateCustomer(@RequestBody Customer customer) {
-        return customerService.update(customer);
+    public ResponseEntity<?> updateCustomer(@RequestBody Customer customer) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(CommonResponse.<Customer>builder()
+                        .statusCode(HttpStatus.OK.value())
+                        .message("Successfully update customer")
+                        .data(customerService.update(customer))
+                        .build());
     }
 
     @DeleteMapping(path = "/customers/{id}")
-    public String deleteCustomer(@PathVariable String id) {
-        return customerService.deleteById(id);
+    public ResponseEntity<?> deleteCustomer(@PathVariable String id) {
+        customerService.deleteById(id);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(CommonResponse.<String>builder()
+                        .statusCode(HttpStatus.OK.value())
+                        .message("Successfully delete customer")
+                        .build());
     }
 
 }

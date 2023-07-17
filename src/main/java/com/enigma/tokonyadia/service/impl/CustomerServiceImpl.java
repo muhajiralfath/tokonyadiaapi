@@ -2,44 +2,42 @@ package com.enigma.tokonyadia.service.impl;
 
 import com.enigma.tokonyadia.entity.Customer;
 import com.enigma.tokonyadia.repository.CustomerRepository;
-import com.enigma.tokonyadia.service.AddressService;
 import com.enigma.tokonyadia.service.CustomerService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
-    private final AddressService addressService;
 
-    @Autowired
-    public CustomerServiceImpl(CustomerRepository customerRepository, AddressService addressService) {
-        this.customerRepository = customerRepository;
-        this.addressService = addressService;
-    }
-
-    //    @Transactional(rollbackOn = RuntimeException.class)
     @Override
     public Customer create(Customer customer) {
-//        Address address = addressService.create(customer.getAddress());
-//        customer.setAddress(address);
-        return customerRepository.save(customer);
+        try {
+            return customerRepository.save(customer);
+        } catch (DataIntegrityViolationException exception) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "email already used");
+        }
     }
 
     @Override
     public List<Customer> createBulk(List<Customer> customers) {
-        return customerRepository.saveAll(customers);
+        return customers.stream().map(this::create).collect(Collectors.toList());
     }
 
     @Override
     public Customer getById(String id) {
-        return customerRepository.findById(id).orElse(null);
+        return customerRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "customer not found"));
     }
 
     @Override
@@ -50,12 +48,6 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public List<Customer> searchByNameOrPhoneOrEmail(String name, String mobilePhone, String email) {
         Specification<Customer> specification = (root, query, criteriaBuilder) -> {
-            // Root -> Entity
-            // Query -> Where
-            // CriteriaBuilder -> Equal (=), NotEqual (<>), Like,
-
-            // Predicate -> Logika yang digunakan untuk melakukan pemfilteran pada entitas/data
-//            Predicate namePredicate2 = criteriaBuilder.equal(root.get("name"), name);
             List<Predicate> predicates = new ArrayList<>();
             if (name != null) {
                 Predicate namePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%");
@@ -72,8 +64,7 @@ public class CustomerServiceImpl implements CustomerService {
                 predicates.add(emailPredicate);
             }
 
-            // SELECT * FROM Customer WHERE name LIKE %name-parameter%
-            return query.where(predicates.toArray(new Predicate[] {})).getRestriction();
+            return query.where(predicates.toArray(new Predicate[]{})).getRestriction();
         };
 
         return customerRepository.findAll(specification);
@@ -91,20 +82,8 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public String deleteById(String id) {
-//        Customer customer = getById(id);
-
-        boolean exists = customerRepository.existsById(id);
-
-        if (exists) {
-            customerRepository.deleteById(id);
-            return "Success";
-        }
-
-//        if (customer != null) {
-//            customerRepository.delete(customer);
-//        }
-
-        return "Failed";
+    public void deleteById(String id) {
+        Customer customer = getById(id);
+        customerRepository.delete(customer);
     }
 }

@@ -1,56 +1,76 @@
 package com.enigma.tokonyadia.controller;
 
-import com.enigma.tokonyadia.entity.Product;
 import com.enigma.tokonyadia.model.request.ProductRequest;
+import com.enigma.tokonyadia.model.response.CommonResponse;
 import com.enigma.tokonyadia.model.response.ProductResponse;
 import com.enigma.tokonyadia.service.ProductService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 public class ProductController {
-
     private final ProductService productService;
 
-    @Autowired
-    public ProductController(ProductService productService) {
-        this.productService = productService;
-    }
-
     @PostMapping(path = "/products")
-    public ProductResponse createNewProduct(@RequestBody ProductRequest request) {
-        return productService.create(request);
+    public ResponseEntity<?> createNewProduct(@RequestBody ProductRequest request) {
+        ProductResponse productResponse = productService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(CommonResponse.<ProductResponse>builder()
+                        .statusCode(HttpStatus.CREATED.value())
+                        .message("Successfully create new product")
+                        .data(productResponse)
+                        .build());
     }
 
     @PostMapping(path = "/products/bulk")
-    public List<Product> createBulkProduct(@RequestBody List<Product> products) {
-        return productService.createBulk(products);
+    public ResponseEntity<?> createBulkProduct(@RequestBody List<ProductRequest> products) {
+        List<ProductResponse> productResponses = productService.createBulk(products);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(CommonResponse.<List<ProductResponse>>builder()
+                        .statusCode(HttpStatus.CREATED.value())
+                        .message("Successfully create bulk customer")
+                        .data(productResponses)
+                        .build());
     }
 
     @GetMapping(path = "/products")
-    public List<ProductResponse> getAllProduct(
+    public ResponseEntity<?> getAllProduct(
             @RequestParam(name = "name", required = false) String name,
-            @RequestParam(name = "price", required = false) Long price
-    ) {
-        if (name != null || price != null) {
-//           return productService.getAllByNameOrPrice(name, price);
-            return null;
-        }
-
-        return productService.getAll();
+            @RequestParam(name = "maxPrice", required = false) Long maxPrice) {
+        List<ProductResponse> productResponses = productService.getAllByNameOrPrice(name, maxPrice);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(CommonResponse.<List<ProductResponse>>builder()
+                        .statusCode(HttpStatus.OK.value())
+                        .message("Successfully get all customer")
+                        .data(productResponses)
+                        .build());
     }
 
     //  Cara 2 Request Body
     @PutMapping(path = "/products")
-    public Product updateProduct(@RequestBody Product product) {
-        return productService.update(product);
+    public ResponseEntity<?> updateProduct(@RequestBody ProductRequest request) {
+        ProductResponse productResponse = productService.update(request);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(CommonResponse.<ProductResponse>builder()
+                        .statusCode(HttpStatus.OK.value())
+                        .message("Successfully update customer")
+                        .data(productResponse)
+                        .build());
     }
 
     @DeleteMapping(path = "/products/{id}")
-    public String deleteById(@PathVariable(name = "id") String id) {
-        return productService.deleteById(id);
+    public ResponseEntity<?> deleteById(@PathVariable(name = "id") String id) {
+        productService.deleteById(id);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(CommonResponse.<String>builder()
+                        .statusCode(HttpStatus.OK.value())
+                        .message("Successfully delete customer")
+                        .build());
     }
 
 }

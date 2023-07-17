@@ -1,19 +1,18 @@
 package com.enigma.tokonyadia.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import java.util.Collections;
 import java.util.List;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder(toBuilder = true)
 @Entity
 @Table(name = "m_product")
 public class Product {
@@ -32,4 +31,11 @@ public class Product {
     @JsonManagedReference
     private List<ProductPrice> productPrices;
 
+    public List<ProductPrice> getProductPrices() {
+        return Collections.unmodifiableList(productPrices);
+    }
+
+    public void addProductPrice(ProductPrice productPrice) {
+        productPrices.add(productPrice);
+    }
 }

@@ -13,6 +13,6 @@ public interface CustomerService {
     List<Customer> getAll();
     List<Customer> searchByNameOrPhoneOrEmail(String name, String phone, String email);
     Customer update(Customer customer);
-    String deleteById(String id);
+    void deleteById(String id);
 
 }

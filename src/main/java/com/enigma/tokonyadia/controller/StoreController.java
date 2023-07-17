@@ -19,31 +19,46 @@ public class StoreController {
     @PostMapping(path = "/store")
     public ResponseEntity<CommonResponse<Store>> createNewStore(@RequestBody Store request) {
         Store store = storeService.create(request);
-
-        CommonResponse<Store> commonResponse = CommonResponse.<Store>builder()
-                .statusCode(HttpStatus.CREATED.value())
-                .message("Successfully created")
-                .data(store)
-                .build();
-
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(commonResponse);
+                .body(CommonResponse.<Store>builder()
+                        .statusCode(HttpStatus.CREATED.value())
+                        .message("Successfully created")
+                        .data(store)
+                        .build());
     }
 
     @GetMapping(path = "/store/{id}")
-    public Store getStoreById(@PathVariable String id) {
-        return storeService.getById(id);
+    public ResponseEntity<?> getStoreById(@PathVariable String id) {
+        Store store = storeService.getById(id);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(CommonResponse.<Store>builder()
+                        .statusCode(HttpStatus.OK.value())
+                        .message("Successfully get store by id")
+                        .data(store)
+                        .build());
     }
 
     @GetMapping(path = "/store")
-    public List<Store> getAllStore() {
-        return storeService.getAll();
+    public ResponseEntity<?> getAllStore() {
+        List<Store> stores = storeService.getAll();
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(CommonResponse.<List<Store>>builder()
+                        .statusCode(HttpStatus.OK.value())
+                        .message("Successfully get all store")
+                        .data(stores)
+                        .build());
     }
 
     @PutMapping(path = "/store")
-    public Store updateStore(@RequestBody Store store) {
-        return storeService.update(store);
+    public ResponseEntity<?> updateStore(@RequestBody Store request) {
+        Store store = storeService.update(request);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(CommonResponse.<Store>builder()
+                        .statusCode(HttpStatus.OK.value())
+                        .message("Successfully update store")
+                        .data(store)
+                        .build());
     }
 
 }

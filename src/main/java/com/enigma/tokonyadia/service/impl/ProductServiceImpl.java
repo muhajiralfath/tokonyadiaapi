@@ -11,11 +11,15 @@ import com.enigma.tokonyadia.service.ProductPriceService;
 import com.enigma.tokonyadia.service.ProductService;
 import com.enigma.tokonyadia.service.StoreService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Predicate;
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -31,101 +35,138 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(rollbackOn = Exception.class)
     @Override
     public ProductResponse create(ProductRequest request) {
-        // TODO: Validasi Store
         Store store = storeService.getById(request.getStoreId());
 
-        // TODO: Create Product
-        Product product = new Product();
-        product.setName(request.getProductName());
-        product.setDescription(request.getDescription());
+        Product product = Product.builder()
+                .name(request.getProductName())
+                .description(request.getDescription())
+                .build();
         productRepository.saveAndFlush(product);
 
-        // TODO: Create Product Price
-        ProductPrice productPrice = new ProductPrice();
-        productPrice.setPrice(request.getPrice());
-        productPrice.setStock(request.getStock());
-        productPrice.setStore(store);
-        productPrice.setProduct(product);
-        productPrice.setIsActive(true);
+        ProductPrice productPrice = ProductPrice.builder()
+                .price(request.getPrice())
+                .stock(request.getStock())
+                .store(store)
+                .product(product)
+                .isActive(true)
+                .build();
         productPriceService.create(productPrice);
 
-        return new ProductResponse(
-                product.getId(),
-                product.getName(),
-                product.getDescription(),
-                productPrice.getPrice(),
-                productPrice.getStock(),
-                new StoreResponse(
-                        store.getId(),
-                        store.getName(),
-                        store.getAddress()
-                )
-        );
+        return ProductResponse.builder()
+                .id(product.getId())
+                .productName(product.getName())
+                .description(product.getDescription())
+                .price(productPrice.getPrice())
+                .stock(productPrice.getStock())
+                .store(StoreResponse.builder()
+                        .id(store.getId())
+                        .name(store.getName())
+                        .address(store.getAddress())
+                        .build())
+                .build();
+    }
+
+    @Transactional(rollbackOn = Exception.class)
+    @Override
+    public List<ProductResponse> createBulk(List<ProductRequest> products) {
+        return products.stream().map(this::create).collect(Collectors.toList());
     }
 
     @Override
-    public List<Product> createBulk(List<Product> products) {
-        return productRepository.saveAll(products);
+    public ProductResponse getById(String id) {
+        Product product = productRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "product not found"));
+        Optional<ProductPrice> productPrice = product.getProductPrices().stream().filter(ProductPrice::getIsActive).findFirst();
+
+        if (productPrice.isEmpty())
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "product not found");
+        Store store = productPrice.get().getStore();
+
+        return toProductResponse(product, productPrice.get(), store);
     }
 
     @Override
-    public Product getById(String id) {
-        return productRepository.findById(id).orElse(null);
-    }
-
-    @Override
-    public List<ProductResponse> getAll() {
-        List<Product> products = productRepository.findAll();
-
-        List<ProductResponse> productResponses = products.stream().map(product -> {
-            Optional<ProductPrice> productPrice = product.getProductPrices().stream().filter(ProductPrice::getIsActive).findFirst();
-
-            if (productPrice.isPresent()) {
-                return new ProductResponse(
-                        product.getId(),
-                        product.getName(),
-                        product.getDescription(),
-                        productPrice.get().getPrice(),
-                        productPrice.get().getStock(),
-                        new StoreResponse(
-                                productPrice.get().getStore().getId(),
-                                productPrice.get().getStore().getName(),
-                                productPrice.get().getStore().getAddress()
-                        )
-                );
+    public List<ProductResponse> getAllByNameOrPrice(String name, Long maxPrice) {
+        Specification<Product> specification = (root, query, criteriaBuilder) -> {
+            Join<Product, ProductPrice> productPrices = root.join("productPrices");
+            List<Predicate> predicates = new ArrayList<>();
+            if (name != null) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
             }
 
-            return null;
-        }).collect(Collectors.toList());
+            if (maxPrice != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(productPrices.get("price"), maxPrice));
+            }
+
+            return query.where(predicates.toArray(new Predicate[]{})).getRestriction();
+        };
+        List<Product> products = productRepository.findAll(specification);
+
+        List<ProductResponse> productResponses = new ArrayList<>();
+        for (Product product : products) {
+            Optional<ProductPrice> productPrice = product.getProductPrices().stream().filter(ProductPrice::getIsActive).findFirst();
+
+            if (productPrice.isEmpty()) break;
+            Store store = productPrice.get().getStore();
+
+            productResponses.add(toProductResponse(product, productPrice.get(), store));
+        }
 
         return productResponses;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     @Override
-    public List<Product> getAllByNameOrPrice(String name, Long price) {
-        return productRepository.findAllByNameContainsOrProductPrices_PriceGreaterThan(name, price);
+    public ProductResponse update(ProductRequest request) {
+        Product currentProduct = findByIdOrThrowNotFound(request.getProductId());
+        currentProduct.setName(request.getProductName());
+        currentProduct.setDescription(request.getDescription());
+
+        ProductPrice productPriceActive = productPriceService.findProductPriceActive(request.getProductId(), true);
+
+        if (!productPriceActive.getStore().getId().equals(request.getStoreId()))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "store tidak boleh diubah");
+
+        // TODO: If price different create new product price
+        if (!request.getPrice().equals(productPriceActive.getPrice())) {
+            productPriceActive.setIsActive(false);
+            ProductPrice productPrice = productPriceService.create(ProductPrice.builder()
+                    .price(request.getPrice())
+                    .stock(request.getStock())
+                    .product(currentProduct)
+                    .store(productPriceActive.getStore())
+                    .isActive(true)
+                    .build());
+            currentProduct.addProductPrice(productPrice);
+            return toProductResponse(currentProduct, productPrice, productPrice.getStore());
+        }
+
+        productPriceActive.setStock(request.getStock());
+
+        return toProductResponse(currentProduct, productPriceActive, productPriceActive.getStore());
     }
 
     @Override
-    public Product update(Product product) {
-        Product currentProduct = getById(product.getId());
-
-        if (currentProduct != null) {
-            return productRepository.save(product);
-        }
-
-        return null;
+    public void deleteById(String id) {
+        Product product = findByIdOrThrowNotFound(id);
+        productRepository.delete(product);
     }
 
-    @Override
-    public String deleteById(String id) {
-        Product currentProduct = getById(id);
+    private Product findByIdOrThrowNotFound(String id) {
+        return productRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "product not found"));
+    }
 
-        if (currentProduct != null) {
-            productRepository.delete(currentProduct);
-            return "Success";
-        }
-
-        return "Failed";
+    private static ProductResponse toProductResponse(Product product, ProductPrice productPrice, Store store) {
+        return ProductResponse.builder()
+                .id(product.getId())
+                .productName(product.getName())
+                .description(product.getDescription())
+                .price(productPrice.getPrice())
+                .stock(productPrice.getStock())
+                .store(StoreResponse.builder()
+                        .id(store.getId())
+                        .name(store.getName())
+                        .address(store.getAddress())
+                        .build())
+                .build();
     }
 }
