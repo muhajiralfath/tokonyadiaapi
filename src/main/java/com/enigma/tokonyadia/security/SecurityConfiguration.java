@@ -25,13 +25,14 @@ public class SecurityConfiguration {
         return new BCryptPasswordEncoder();
     }
 
+    @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-         http.httpBasic().and().csrf().disable()
+         return http.httpBasic().and().csrf().disable()
                  .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                  .authorizeRequests()
                  .antMatchers("/api/v1/auth/**").permitAll()
@@ -39,6 +40,6 @@ public class SecurityConfiguration {
                  .and().addFilterBefore(authTokenFIlter, UsernamePasswordAuthenticationFilter.class)
                 .build();
 
-         return http.build();
+
     }
 }
