@@ -3,6 +3,7 @@ package com.enigma.tokonyadia.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfiguration {
 
     private final AuthTokenFIlter  authTokenFIlter;
+    private final AuthEntryPoint authEntryPoint;
 
     @Bean
     public PasswordEncoder passwordEncoder(){
@@ -33,9 +35,11 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
          return http.httpBasic().and().csrf().disable()
+                 .exceptionHandling().authenticationEntryPoint(authEntryPoint).and()
                  .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                  .authorizeRequests()
                  .antMatchers("/api/v1/auth/**").permitAll()
+                 .antMatchers(HttpMethod.GET,"/api/v1/products").permitAll()
                  .anyRequest().authenticated()
                  .and().addFilterBefore(authTokenFIlter, UsernamePasswordAuthenticationFilter.class)
                 .build();
