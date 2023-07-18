@@ -2,6 +2,7 @@ package com.enigma.tokonyadia.controller;
 
 import com.enigma.tokonyadia.model.request.AuthRequest;
 import com.enigma.tokonyadia.model.response.CommonResponse;
+import com.enigma.tokonyadia.model.response.LoginResponse;
 import com.enigma.tokonyadia.model.response.RegisterResponse;
 import com.enigma.tokonyadia.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,18 @@ public class AuthController {
                 .build();
 
         return ResponseEntity.status(HttpStatus.CREATED)
+                .body(commonResponse);
+    }
+    @PostMapping(path = "/login")
+    public ResponseEntity<?> login(@RequestBody AuthRequest request){
+        LoginResponse response = authService.login(request);
+        CommonResponse<Object> commonResponse = CommonResponse.builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("Successfully Login")
+                .data(response)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.OK)
                 .body(commonResponse);
     }
 }

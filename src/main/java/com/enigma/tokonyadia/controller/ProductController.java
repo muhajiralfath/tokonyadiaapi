@@ -36,7 +36,7 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CommonResponse.<List<ProductResponse>>builder()
                         .statusCode(HttpStatus.CREATED.value())
-                        .message("Successfully create bulk customer")
+                        .message("Successfully create bulk products")
                         .data(productResponses)
                         .build());
     }
@@ -57,7 +57,7 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(CommonResponse.builder()
                         .statusCode(HttpStatus.OK.value())
-                        .message("Successfully get all customer")
+                        .message("Successfully get all products")
                         .data(productResponses.getContent())
                         .paging(pagingResponse)
                         .build());
@@ -69,7 +69,7 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(CommonResponse.<ProductResponse>builder()
                         .statusCode(HttpStatus.OK.value())
-                        .message("Successfully update customer")
+                        .message("Successfully update product")
                         .data(productResponse)
                         .build());
     }
