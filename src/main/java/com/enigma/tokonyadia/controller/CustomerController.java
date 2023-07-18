@@ -6,6 +6,7 @@ import com.enigma.tokonyadia.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +28,7 @@ public class CustomerController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> getAllCustomer(
             @RequestParam(name = "name", required = false) String name,
             @RequestParam(name = "mobilePhone", required = false) String mobilePhone,
