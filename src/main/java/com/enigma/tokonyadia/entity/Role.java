@@ -23,6 +23,6 @@ public class Role {
     private String id;
 
     @Enumerated(EnumType.STRING)
-    private ERole eRole;
+    private ERole role;
 
 }
