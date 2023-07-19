@@ -1,9 +1,6 @@
 package com.enigma.tokonyadia.service.impl;
 
-import com.enigma.tokonyadia.entity.Customer;
-import com.enigma.tokonyadia.entity.Role;
-import com.enigma.tokonyadia.entity.UserCredential;
-import com.enigma.tokonyadia.entity.UserDetailsImpl;
+import com.enigma.tokonyadia.entity.*;
 import com.enigma.tokonyadia.entity.constant.ERole;
 import com.enigma.tokonyadia.model.request.AuthRequest;
 import com.enigma.tokonyadia.model.response.LoginResponse;
@@ -11,9 +8,7 @@ import com.enigma.tokonyadia.model.response.RegisterResponse;
 import com.enigma.tokonyadia.repository.UserCredentialRepository;
 import com.enigma.tokonyadia.security.BCrypUtils;
 import com.enigma.tokonyadia.security.JwtUtils;
-import com.enigma.tokonyadia.service.AuthService;
-import com.enigma.tokonyadia.service.CustomerService;
-import com.enigma.tokonyadia.service.RoleService;
+import com.enigma.tokonyadia.service.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.catalina.User;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -40,6 +35,10 @@ public class AuthServiceImpl implements AuthService {
     private final RoleService roleService;
     private final CustomerService customerService;
     private final JwtUtils jwtUtils;
+    private final AdminService adminService;
+    private final SellerService sellerService;
+    private final AddressService addressService;
+    private final StoreService storeService;
 
     @Transactional(rollbackOn = Exception.class)
     @Override
@@ -53,11 +52,70 @@ public class AuthServiceImpl implements AuthService {
                     .build();
             userCredentialRepository.saveAndFlush(credential);
 
+            Address address = addressService.create(Address.builder().build());
+
             Customer customer = Customer.builder()
                     .email(credential.getEmail())
+                    .address(address)
                     .userCredential(credential)
                     .build();
             customerService.create(customer);
+            return RegisterResponse.builder().email(credential.getEmail()).build();
+        } catch (DataIntegrityViolationException e){
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "User already exist");
+        }
+    }
+
+    @Transactional(rollbackOn = Exception.class)
+    @Override
+    public RegisterResponse registerAdmin(AuthRequest request) {
+        try {
+            Role role = roleService.getOrSave(ERole.ROLE_ADMIN);
+            UserCredential credential = UserCredential.builder()
+                    .email(request.getEmail())
+                    .password(bCrypUtils.hashPassword(request.getPassword()))
+                    .roles(List.of(role))
+                    .build();
+            userCredentialRepository.saveAndFlush(credential);
+
+            String adminName = request.getEmail().split("@")[0];
+            Admin admin = Admin.builder()
+                    .name(adminName)
+                    .email(request.getEmail())
+                    .userCredential(credential)
+                    .build();
+
+            adminService.create(admin);
+
+            return RegisterResponse.builder().email(credential.getEmail()).build();
+        } catch (DataIntegrityViolationException e){
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "User already exist");
+        }
+    }
+    @Transactional(rollbackOn = Exception.class)
+    @Override
+    public RegisterResponse registerSeller(AuthRequest request) {
+        try {
+            Role role = roleService.getOrSave(ERole.ROLE_SELLER);
+            UserCredential credential = UserCredential.builder()
+                    .email(request.getEmail())
+                    .password(bCrypUtils.hashPassword(request.getPassword()))
+                    .roles(List.of(role))
+                    .build();
+            userCredentialRepository.saveAndFlush(credential);
+
+            Store store = storeService.create(Store.builder().build());
+
+            String sellerName = request.getEmail().split("@")[0];
+            Seller seller = Seller.builder()
+                    .name(sellerName)
+                    .email(request.getEmail())
+                    .store(store)
+                    .userCredential(credential)
+                    .build();
+
+            sellerService.create(seller);
+
             return RegisterResponse.builder().email(credential.getEmail()).build();
         } catch (DataIntegrityViolationException e){
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User already exist");
@@ -83,6 +141,8 @@ public class AuthServiceImpl implements AuthService {
                 .token(token)
                 .build();
     }
+
+
 
 
 }

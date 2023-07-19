@@ -6,5 +6,8 @@ import com.enigma.tokonyadia.model.response.RegisterResponse;
 
 public interface AuthService {
     RegisterResponse register(AuthRequest request);
+    RegisterResponse registerAdmin(AuthRequest request);
+    RegisterResponse registerSeller(AuthRequest request);
     LoginResponse login(AuthRequest request);
+
 }

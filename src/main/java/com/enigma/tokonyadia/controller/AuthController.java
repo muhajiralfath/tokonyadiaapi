@@ -32,6 +32,32 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(commonResponse);
     }
+    @PostMapping(path = "/register-admin")
+    public ResponseEntity<?> registerAdmin(@RequestBody AuthRequest request){
+        RegisterResponse register = authService.registerAdmin(request);
+        CommonResponse<Object> commonResponse = CommonResponse.builder()
+                .statusCode(HttpStatus.CREATED.value())
+                .message("Successfully Register")
+                .data(register)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(commonResponse);
+    }
+    @PostMapping(path = "/register-seller")
+    public ResponseEntity<?> registerSeller(@RequestBody AuthRequest request){
+        RegisterResponse register = authService.registerSeller(request);
+        CommonResponse<Object> commonResponse = CommonResponse.builder()
+                .statusCode(HttpStatus.CREATED.value())
+                .message("Successfully Register")
+                .data(register)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(commonResponse);
+    }
+
+
     @PostMapping(path = "/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request){
         LoginResponse response = authService.login(request);
