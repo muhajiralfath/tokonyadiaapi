@@ -1,11 +1,15 @@
 package com.enigma.tokonyadia.controller;
 
 import com.enigma.tokonyadia.entity.Store;
+import com.enigma.tokonyadia.model.request.UpdateStoreRequest;
 import com.enigma.tokonyadia.model.response.CommonResponse;
+import com.enigma.tokonyadia.model.response.StoreResponse;
+import com.enigma.tokonyadia.service.SellerService;
 import com.enigma.tokonyadia.service.StoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,26 +18,13 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping(path = "/api/v1/store")
 public class StoreController {
-
     private final StoreService storeService;
-
-    @PostMapping
-    public ResponseEntity<CommonResponse<Store>> createNewStore(@RequestBody Store request) {
-        Store store = storeService.create(request);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(CommonResponse.<Store>builder()
-                        .statusCode(HttpStatus.CREATED.value())
-                        .message("Successfully created")
-                        .data(store)
-                        .build());
-    }
 
     @GetMapping(path = "/{id}")
     public ResponseEntity<?> getStoreById(@PathVariable String id) {
         Store store = storeService.getById(id);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(CommonResponse.<Store>builder()
+                .body(CommonResponse.builder()
                         .statusCode(HttpStatus.OK.value())
                         .message("Successfully get store by id")
                         .data(store)
@@ -44,21 +35,22 @@ public class StoreController {
     public ResponseEntity<?> getAllStore() {
         List<Store> stores = storeService.getAll();
         return ResponseEntity.status(HttpStatus.OK)
-                .body(CommonResponse.<List<Store>>builder()
+                .body(CommonResponse.builder()
                         .statusCode(HttpStatus.OK.value())
                         .message("Successfully get all store")
                         .data(stores)
                         .build());
     }
 
+    @PreAuthorize("hasRole('SELLER') and @userSecurity.checkSeller(authentication, #request.getStoreId())")
     @PutMapping
-    public ResponseEntity<?> updateStore(@RequestBody Store request) {
-        Store store = storeService.update(request);
+    public ResponseEntity<?> updateStore(@RequestBody UpdateStoreRequest request) {
+        StoreResponse storeResponse = storeService.update(request);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(CommonResponse.<Store>builder()
+                .body(CommonResponse.builder()
                         .statusCode(HttpStatus.OK.value())
                         .message("Successfully update store")
-                        .data(store)
+                        .data(storeResponse)
                         .build());
     }
 

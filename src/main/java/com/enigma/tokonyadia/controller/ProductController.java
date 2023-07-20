@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,6 +39,17 @@ public class ProductController {
                         .statusCode(HttpStatus.CREATED.value())
                         .message("Successfully create bulk customer")
                         .data(productResponses)
+                        .build());
+    }
+
+    @GetMapping(path = "/{id}")
+    public ResponseEntity<?> getProductById(Authentication authentication, @PathVariable String id) {
+        ProductResponse productResponse = productService.getById(id);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(CommonResponse.builder()
+                        .statusCode(HttpStatus.OK.value())
+                        .message("Successfully get customer")
+                        .data(productResponse)
                         .build());
     }
 

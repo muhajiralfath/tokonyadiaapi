@@ -1,7 +1,10 @@
 package com.enigma.tokonyadia.service.impl;
 
 import com.enigma.tokonyadia.entity.Store;
+import com.enigma.tokonyadia.model.request.UpdateStoreRequest;
+import com.enigma.tokonyadia.model.response.StoreResponse;
 import com.enigma.tokonyadia.repository.StoreRepository;
+import com.enigma.tokonyadia.service.SellerService;
 import com.enigma.tokonyadia.service.StoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,15 +23,6 @@ public class StoreServiceImpl implements StoreService {
     private final StoreRepository storeRepository;
 
     @Override
-    public Store create(Store store) {
-        try {
-            return storeRepository.save(store);
-        } catch (DataIntegrityViolationException exception) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "MobilePhone or Siup already used");
-        }
-    }
-
-    @Override
     public Store getById(String id) {
         return storeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Store not found"));
@@ -40,13 +34,23 @@ public class StoreServiceImpl implements StoreService {
     }
 
     @Override
-    public Store update(Store store) {
-        Store currentStore = getById(store.getId());
+    public StoreResponse update(UpdateStoreRequest request) {
+        getById(request.getStoreId());
 
-        if (currentStore != null) {
-            return storeRepository.save(currentStore);
-        }
+        Store store = Store.builder()
+                .id(request.getStoreId())
+                .name(request.getStoreName())
+                .noSiup(request.getNoSiup())
+                .address(request.getAddress())
+                .mobilePhone(request.getMobilePhone())
+                .build();
+        storeRepository.save(store);
 
-        return null;
+        return StoreResponse.builder()
+                .id(store.getId())
+                .name(store.getName())
+                .address(store.getAddress())
+                .mobilePhone(store.getMobilePhone())
+                .build();
     }
 }

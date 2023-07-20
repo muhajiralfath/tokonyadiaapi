@@ -6,6 +6,7 @@ import com.enigma.tokonyadia.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,17 +17,18 @@ import java.util.List;
 public class CustomerController {
     private final CustomerService customerService;
 
-    @PostMapping
-    public ResponseEntity<?> createNewCustomer(@RequestBody Customer customer) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(CommonResponse.<Customer>builder()
-                        .statusCode(HttpStatus.CREATED.value())
-                        .message("Successfully create new customer")
-                        .data(customerService.create(customer))
-                        .build());
-    }
+//    @PostMapping
+//    public ResponseEntity<?> createNewCustomer(@RequestBody Customer customer) {
+//        return ResponseEntity.status(HttpStatus.CREATED)
+//                .body(CommonResponse.<Customer>builder()
+//                        .statusCode(HttpStatus.CREATED.value())
+//                        .message("Successfully create new customer")
+//                        .data(customerService.create(customer))
+//                        .build());
+//    }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> getAllCustomer(
             @RequestParam(name = "name", required = false) String name,
             @RequestParam(name = "mobilePhone", required = false) String mobilePhone,
@@ -51,6 +53,7 @@ public class CustomerController {
                         .build());
     }
 
+    @PreAuthorize("hasRole('CUSTOMER') and @userSecurity.checkCustomer(authentication, #customer.getId())")
     @PutMapping
     public ResponseEntity<?> updateCustomer(@RequestBody Customer customer) {
         return ResponseEntity.status(HttpStatus.OK)
@@ -61,6 +64,7 @@ public class CustomerController {
                         .build());
     }
 
+    @PreAuthorize("hasRole('CUSTOMER') and @userSecurity.checkCustomer(authentication, #id)")
     @DeleteMapping(path = "/customers/{id}")
     public ResponseEntity<?> deleteCustomer(@PathVariable String id) {
         customerService.deleteById(id);
