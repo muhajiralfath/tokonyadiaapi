@@ -1,18 +1,25 @@
 package com.enigma.tokonyadia.service.impl;
 
 import com.enigma.tokonyadia.entity.Customer;
+import com.enigma.tokonyadia.model.request.CustomerRequest;
 import com.enigma.tokonyadia.repository.CustomerRepository;
 import com.enigma.tokonyadia.service.CustomerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -71,14 +78,28 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public Customer update(Customer customer) {
-        Customer currentCustomer = getById(customer.getId());
+    public Customer update(CustomerRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String authenticationName = authentication.getName();
+
+        Customer currentCustomer = getById(request.getId());
 
         if (currentCustomer != null) {
-            return customerRepository.save(customer);
+            if (authenticationName.equals(currentCustomer.getEmail())) {
+                currentCustomer.setName(request.getName());
+                currentCustomer.setMobilePhone(request.getMobilePhone());
+                if(currentCustomer.getAddress() == null){
+                    currentCustomer.setAddress(request.getAddress());
+                } else {
+                    currentCustomer.getAddress().setStreet(request.getAddress().getStreet());
+                    currentCustomer.getAddress().setCity(request.getAddress().getCity());
+                    currentCustomer.getAddress().setProvince(request.getAddress().getProvince());
+                }
+                return customerRepository.save(currentCustomer);
+            }
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You dont have access to change the data!");
         }
-
-        return null;
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
     @Override

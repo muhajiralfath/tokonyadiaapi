@@ -1,6 +1,7 @@
 package com.enigma.tokonyadia.controller;
 
 import com.enigma.tokonyadia.entity.Customer;
+import com.enigma.tokonyadia.model.request.CustomerRequest;
 import com.enigma.tokonyadia.model.response.CommonResponse;
 import com.enigma.tokonyadia.service.CustomerService;
 import lombok.RequiredArgsConstructor;
@@ -54,12 +55,12 @@ public class CustomerController {
     }
 
     @PutMapping
-    public ResponseEntity<?> updateCustomer(@RequestBody Customer customer) {
+    public ResponseEntity<?> updateCustomer(@RequestBody CustomerRequest request) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(CommonResponse.<Customer>builder()
                         .statusCode(HttpStatus.OK.value())
                         .message("Successfully update customer")
-                        .data(customerService.update(customer))
+                        .data(customerService.update(request))
                         .build());
     }
 

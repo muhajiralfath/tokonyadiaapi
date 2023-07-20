@@ -53,8 +53,10 @@ public class AuthServiceImpl implements AuthService {
             userCredentialRepository.saveAndFlush(credential);
 
             Address address = addressService.create(Address.builder().build());
+            String customerName = request.getEmail().split("@")[0];
 
             Customer customer = Customer.builder()
+                    .name(customerName)
                     .email(credential.getEmail())
                     .address(address)
                     .userCredential(credential)
