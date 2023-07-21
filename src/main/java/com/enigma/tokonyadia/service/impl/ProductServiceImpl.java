@@ -10,6 +10,7 @@ import com.enigma.tokonyadia.repository.ProductRepository;
 import com.enigma.tokonyadia.service.ProductPriceService;
 import com.enigma.tokonyadia.service.ProductService;
 import com.enigma.tokonyadia.service.StoreService;
+import com.enigma.tokonyadia.specification.ProductSpecification;
 import com.enigma.tokonyadia.util.ValidationUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -93,19 +94,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductResponse> getAllByNameOrPrice(String name, Long maxPrice, Integer page, Integer size) {
-        Specification<Product> specification = (root, query, criteriaBuilder) -> {
-            Join<Product, ProductPrice> productPrices = root.join("productPrices");
-            List<Predicate> predicates = new ArrayList<>();
-            if (name != null) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
-            }
-
-            if (maxPrice != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(productPrices.get("price"), maxPrice));
-            }
-
-            return query.where(predicates.toArray(new Predicate[]{})).getRestriction();
-        };
+        Specification<Product> specification = ProductSpecification.getSpecification(name, maxPrice);
         Pageable pageable = PageRequest.of(page, size);
         Page<Product> products = productRepository.findAll(specification, pageable);
         List<ProductResponse> productResponses = new ArrayList<>();

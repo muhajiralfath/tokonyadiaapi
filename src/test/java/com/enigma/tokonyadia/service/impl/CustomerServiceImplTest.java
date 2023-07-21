@@ -32,11 +32,8 @@ class CustomerServiceImplTest {
     @Test
     void shouldReturnCustomerWhenCreateNewCustomer() {
         // Given
-        Customer edy = Customer.builder()
-                .id("1")
-                .name("edy")
-                .mobilePhone("08123")
-                .build();
+        Customer edy = new Customer();
+        edy.setName("edy");
 
         // When
         when(customerRepository.save(edy)).thenReturn(edy);
@@ -44,6 +41,7 @@ class CustomerServiceImplTest {
 
         Assertions.assertNotNull(actual);
         Assertions.assertEquals("edy", actual.getName());
+        verify(customerRepository, times(1)).save(edy);
     }
 
     @Test
